@@ -11,6 +11,7 @@ $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) {
     die("Verbindung fehlgeschlagen: " . $conn->connect_error);
 }
+$conn->query("SET time_zone = '" . date('P') . "'");
 
 // --- MAPPING VON STATION-ID ZU NAME ---
 // Diese Namen musst du manuell pflegen. Die IDs findest du in der Tankerkönig-Suche.

@@ -1,4 +1,7 @@
 <?php
+// --- ZEITZONE SETZEN ---
+date_default_timezone_set('Europe/Berlin');
+
 // --- DATENBANK-KONFIGURATION ---
 define('DB_HOST', 'localhost');
 define('DB_USER', 'dein_datenbank_nutzer');

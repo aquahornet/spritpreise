@@ -16,6 +16,7 @@ $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
 if ($conn->connect_error) {
     die("Verbindung fehlgeschlagen: " . $conn->connect_error);
 }
+$conn->query("SET time_zone = '" . date('P') . "'");
 
 // --- HILFSFUNKTIONEN ---
 function getExtremes($conn, $stationId, $fuel, $sort) {

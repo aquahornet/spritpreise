@@ -8,6 +8,7 @@ if ($conn->connect_error) {
     // Auch Fehlermeldungen brauchen einen Zeilenumbruch für das Log
     die("Verbindung fehlgeschlagen: " . $conn->connect_error . PHP_EOL);
 }
+$conn->query("SET time_zone = '" . date('P') . "'");
 
 // --- DATEN VON API ABRUFEN ---
 $url = "https://creativecommons.tankerkoenig.de/json/prices.php?ids=" . urlencode(STATION_IDS) . "&apikey=" . urlencode(TANKERKOENIG_API_KEY);

@@ -185,6 +185,19 @@ if ($table_exists) {
         .vehicle-link:hover {
             text-decoration: underline;
         }
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            th, td { padding: 10px 8px; font-size: 0.85em; }
+            .vehicle-table th, .vehicle-table td { padding: 10px 8px; font-size: 0.85em; }
+        }
     </style>
     <style>
         /* Zusätzliche Stile für den klickbaren Link */
@@ -201,8 +214,9 @@ if ($table_exists) {
 <div class="container">
     <h1>Aktuelle Spritpreise</h1>
     
-    <table>
-        <thead>
+    <div class="table-responsive">
+        <table>
+            <thead>
             <tr>
                 <th>Station</th>
                 <th>Diesel</th>
@@ -243,10 +257,12 @@ if ($table_exists) {
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 
     <h2 class="vehicle-section-title">Fahrzeug-Statistiken</h2>
-    <table class="vehicle-table">
-        <thead>
+    <div class="table-responsive">
+        <table class="vehicle-table">
+            <thead>
             <tr>
                 <th>Fahrzeug</th>
                 <th>Gesamt getankt</th>
@@ -281,6 +297,7 @@ if ($table_exists) {
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 </body>

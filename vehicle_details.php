@@ -159,6 +159,36 @@ $display_entries = array_reverse($entries);
         th { background-color: #28a745; color: white; }
         tr:hover { background-color: #f8f9fa; }
         
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            margin-top: 20px;
+            border-radius: 6px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .stats-grid .stat-card:last-child {
+                grid-column: span 2;
+            }
+            .stat-card {
+                padding: 10px;
+            }
+            .stat-card .stat-value {
+                font-size: 1.3em;
+            }
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.8em;
+            }
+        }
+        
         /* Sortierbare Spaltenköpfe */
         th.sortable {
             cursor: pointer;
@@ -229,9 +259,10 @@ $display_entries = array_reverse($entries);
     </div>
     
     <!-- Details Table -->
-    <table id="detailsTable">
-        <thead>
-            <tr>
+    <div class="table-responsive">
+        <table id="detailsTable">
+            <thead>
+                <tr>
                 <th class="sortable" data-sort-type="date">Datum</th>
                 <th class="sortable" data-sort-type="number">Kilometerstand</th>
                 <th class="sortable" data-sort-type="number">Menge</th>
@@ -273,6 +304,7 @@ $display_entries = array_reverse($entries);
             <?php endif; ?>
         </tbody>
     </table>
+    </div>
 </div>
 
 <script>

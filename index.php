@@ -4,10 +4,32 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// --- KONFIGURATION LADEN ---
-require_once __DIR__ . '/config.php';
+// --- .env DATEI LADEN ---
+if (file_exists(__DIR__ . '/.env')) {
+    foreach (file(__DIR__ . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || strpos($line, '#') === 0) continue;
+        $pos = strpos($line, '=');
+        if ($pos !== false) {
+            $name = trim(substr($line, 0, $pos));
+            $value = trim(substr($line, $pos + 1), " \t\n\r\0\x0B\"'");
+            $_ENV[$name] = $value;
+            putenv("$name=$value");
+        }
+    }
+}
+date_default_timezone_set('Europe/Berlin');
 
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+$db_host = $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
+$db_user = $_ENV['DB_USER'] ?? getenv('DB_USER') ?: null;
+$db_pass = $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: null;
+$db_name = $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: null;
+
+if ($db_user === null || $db_name === null) {
+    die("Fehler: Datenbank-Konfiguration fehlt. Bitte stelle sicher, dass die .env-Datei auf dem Server existiert (Hinweis: Dein rsync-Befehl schließt .env-Dateien aus).");
+}
+
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name);
 if ($conn->connect_error) {
     die("Verbindung fehlgeschlagen: " . $conn->connect_error);
 }
@@ -81,6 +103,7 @@ $result = $conn->query($sql);
                 <th>E5</th>
                 <th>E10</th>
                 <th>Stand</th>
+                <th>Diesel (55l)</th>
             </tr>
         </thead>
         <tbody>
@@ -104,10 +127,13 @@ $result = $conn->query($sql);
                         <td class="<?php echo $priceClass; ?>"><?php echo $row['e5'] !== null ? number_format($row['e5'], 3, ',', '.') . ' €' : '-'; ?></td>
                         <td class="<?php echo $priceClass; ?>"><?php echo $row['e10'] !== null ? number_format($row['e10'], 3, ',', '.') . ' €' : '-'; ?></td>
                         <td class="time"><?php echo date("H:i (d.m.)", strtotime($row['timestamp'])); ?></td>
+                        <td class="<?php echo $priceClass; ?>">
+                            <?php echo $row['diesel'] !== null ? number_format($row['diesel'] * 55, 2, ',', '.') . ' €' : '-'; ?>
+                        </td>
                     </tr>
                 <?php endwhile; ?>
             <?php else: ?>
-                <tr><td colspan="5">Noch keine Daten vorhanden. Starte erst das fetch-Skript!</td></tr>
+                <tr><td colspan="6">Noch keine Daten vorhanden. Starte erst das fetch-Skript!</td></tr>
             <?php endif; ?>
         </tbody>
     </table>

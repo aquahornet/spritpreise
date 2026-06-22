@@ -57,6 +57,63 @@ $sql = "SELECT
         ORDER BY diesel ASC"; // Sortiert nach dem günstigsten Diesel
 
 $result = $conn->query($sql);
+
+// --- FAHRZEUGDATEN ABFRAGEN ---
+$vehicles_stats = [];
+$table_exists = false;
+$check_table = $conn->query("SHOW TABLES LIKE 'tankdaten'");
+if ($check_table && $check_table->num_rows > 0) {
+    $table_exists = true;
+}
+
+if ($table_exists) {
+    $sql_tank = "SELECT fahrzeug, km_stand, liter, preis FROM tankdaten ORDER BY fahrzeug, km_stand ASC";
+    if ($result_tank = $conn->query($sql_tank)) {
+        $raw_data = [];
+        while ($row = $result_tank->fetch_assoc()) {
+            $raw_data[$row['fahrzeug']][] = $row;
+        }
+
+        foreach ($raw_data as $vehicle => $entries) {
+            $total_liters = 0;
+            $total_cost = 0;
+            $min_km = null;
+            $max_km = null;
+            $liters_for_consumption = 0;
+
+            foreach ($entries as $index => $entry) {
+                $liter = (float)$entry['liter'];
+                $preis = (float)$entry['preis'];
+                $km = (float)$entry['km_stand'];
+
+                $total_liters += $liter;
+                $total_cost += $liter * $preis;
+
+                if ($min_km === null || $km < $min_km) $min_km = $km;
+                if ($max_km === null || $km > $max_km) $max_km = $km;
+
+                // Für den Verbrauch: erste Befüllung überspringen (Startbefüllung)
+                if ($index > 0) {
+                    $liters_for_consumption += $liter;
+                }
+            }
+
+            $distance = ($max_km !== null && $min_km !== null) ? ($max_km - $min_km) : 0;
+            $avg_consumption = 0;
+            if ($distance > 0) {
+                $avg_consumption = ($liters_for_consumption / $distance) * 100;
+            }
+
+            $vehicles_stats[] = [
+                'name' => $vehicle,
+                'total_liters' => $total_liters,
+                'total_cost' => $total_cost,
+                'distance' => $distance,
+                'avg_consumption' => $avg_consumption
+            ];
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -79,6 +136,55 @@ $result = $conn->query($sql);
         }
         .price { font-weight: bold; color: #d9534f; }
         .time { font-size: 0.8em; color: #666; }
+        .vehicle-section-title {
+            margin-top: 40px;
+            color: #333;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 8px;
+            font-size: 1.5em;
+        }
+        .vehicle-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .vehicle-table th {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+            padding: 12px;
+        }
+        .vehicle-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            color: #444;
+        }
+        .vehicle-table tr:hover {
+            background-color: #f9f9f9;
+        }
+        .badge-consumption {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .vehicle-bold {
+            font-weight: bold;
+            color: #2b2b2b;
+        }
+        .vehicle-link {
+            text-decoration: none;
+            color: #28a745;
+            font-weight: bold;
+        }
+        .vehicle-link:hover {
+            text-decoration: underline;
+        }
     </style>
     <style>
         /* Zusätzliche Stile für den klickbaren Link */
@@ -134,6 +240,44 @@ $result = $conn->query($sql);
                 <?php endwhile; ?>
             <?php else: ?>
                 <tr><td colspan="6">Noch keine Daten vorhanden. Starte erst das fetch-Skript!</td></tr>
+            <?php endif; ?>
+        </tbody>
+    </table>
+
+    <h2 class="vehicle-section-title">Fahrzeug-Statistiken</h2>
+    <table class="vehicle-table">
+        <thead>
+            <tr>
+                <th>Fahrzeug</th>
+                <th>Gesamt getankt</th>
+                <th>Gesamtkosten</th>
+                <th>Durchschnittsverbrauch</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php if (!empty($vehicles_stats)): ?>
+                <?php foreach ($vehicles_stats as $stat): ?>
+                    <tr>
+                        <td class="vehicle-bold">
+                            <a href="vehicle_details.php?name=<?php echo urlencode($stat['name']); ?>" class="vehicle-link"><?php echo htmlspecialchars($stat['name']); ?></a>
+                        </td>
+                        <td><?php echo number_format($stat['total_liters'], 2, ',', '.') . ' l'; ?></td>
+                        <td><?php echo number_format($stat['total_cost'], 2, ',', '.') . ' €'; ?></td>
+                        <td>
+                            <?php if ($stat['avg_consumption'] > 0): ?>
+                                <span class="badge-consumption"><?php echo number_format($stat['avg_consumption'], 2, ',', '.') . ' l/100km'; ?></span>
+                            <?php else: ?>
+                                <span style="color: #999; font-style: italic;">Nicht genügend Daten</span>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <tr>
+                    <td colspan="4" style="text-align: center; color: #999; font-style: italic; padding: 20px;">
+                        Keine Fahrzeugdaten gefunden. Bitte starte das Sync-Skript!
+                    </td>
+                </tr>
             <?php endif; ?>
         </tbody>
     </table>
